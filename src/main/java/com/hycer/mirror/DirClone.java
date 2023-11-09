@@ -1,6 +1,5 @@
 package com.hycer.mirror;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -26,12 +25,10 @@ public class DirClone {
 
     }
     public void backup() throws IOException {
+        totalNUm = 0;
+        copied = 0;
         getTotalNum(sourceFolder);
-        System.out.println("cloning...");
-        player.sendMessage(Text.of("cloning..."));
         copyFolder(sourceFolder, destinationFolder);
-        System.out.println("clone successfully");
-        player.sendMessage(Text.of("clone successfully"));
 
     }
 
@@ -69,8 +66,7 @@ public class DirClone {
                     File destinationFile = new File(destinationFolder, file.getName());
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
-                    System.out.println("progress:" + copied + " / " + totalNUm);
-                    player.sendMessage(Text.of("progress:" + copied + " / " + totalNUm));
+                    player.sendMessage(Text.of("§bProgress:" + copied + " / " + totalNUm + "  cloning " + file.getName()));
                 }
             }
         }
