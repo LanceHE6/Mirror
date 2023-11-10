@@ -2,8 +2,9 @@ package com.hycer.mirror;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.server.world.ServerWorld;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,8 +34,10 @@ public class BackupManager {
 
     public void backup(CommandContext<ServerCommandSource> context, boolean haveTag) throws IOException, InterruptedException {
         ServerCommandSource source =  context.getSource();
-        source.sendMessage(Text.of("§b[Mirror]§6服务器将在 §c10s §6后进行地图备份！"));
+        MinecraftServer server = source.getServer();
+        ServerWorld world = server.getWorld(source.getWorld().getRegistryKey());
 
+        Utils.broadcastToAllPlayers(world, "§b[Mirror]§6服务器将在 §c10s §6后进行地图备份！");
         Runnable task = () -> {
             try {
                 sleep(10000);
@@ -43,7 +46,7 @@ public class BackupManager {
             }
 
             source.getServer().saveAll(false, false, false);
-            source.sendMessage(Text.of("§6游戏数据已保存，开始地图备份"));
+            Utils.broadcastToAllPlayers(world, "§6游戏数据已保存，开始地图备份");
             System.out.println("进行服务器备份");
             try {
                 sleep(1000);
@@ -66,13 +69,13 @@ public class BackupManager {
                 backupPath += nowTime;
             }
 
-            DirClone dirClone = new DirClone(worldPath, backupPath, source);
+            DirClone dirClone = new DirClone(worldPath, backupPath, world);
             try {
                 dirClone.backup();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            source.sendMessage(Text.of("§6地图备份完成：" + backupPath));
+            Utils.broadcastToAllPlayers(world, "§6地图备份完成：" + backupPath);
             System.out.println("备份完成");
         };
 

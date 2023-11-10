@@ -1,7 +1,6 @@
 package com.hycer.mirror;
 
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.world.World;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +16,9 @@ public class DirClone {
     private static long totalNUm = 0;
     private static long copied = 0;
 
-    private final ServerCommandSource player;
-    DirClone(String sourcePath, String destinationPath, ServerCommandSource player){
-        this.player = player;
+    private final World world;
+    DirClone(String sourcePath, String destinationPath, World world){
+        this.world = world;
         this.sourceFolder = new File(sourcePath);
         this.destinationFolder = new File(destinationPath);
 
@@ -32,6 +31,10 @@ public class DirClone {
 
     }
 
+    /**
+     * 获取总的文件数
+     * @param sourceFolder 目标文件夹
+     */
     public static void getTotalNum(File sourceFolder){
         File[] files = sourceFolder.listFiles();
         if(files != null){
@@ -49,6 +52,12 @@ public class DirClone {
         }
     }
 
+    /**
+     * 复制文件夹
+     * @param sourceFolder 源文件夹
+     * @param destinationFolder 目的文件夹
+     * @throws IOException IO异常
+     */
     public void copyFolder(File sourceFolder, File destinationFolder) throws IOException{
         if (!destinationFolder.exists()){
             destinationFolder.mkdir();
@@ -66,7 +75,7 @@ public class DirClone {
                     File destinationFile = new File(destinationFolder, file.getName());
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
-                    player.sendMessage(Text.of("§bProgress:" + copied + " / " + totalNUm + "  cloning " + file.getName()));
+                    Utils.broadcastToAllPlayers(world, "§bProgress:" + copied + " / " + totalNUm + "  cloning " + file.getName());
                 }
             }
         }
