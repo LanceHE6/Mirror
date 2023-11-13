@@ -137,7 +137,8 @@ public class BackupManager {
 
     public Object[] getBackupList(){
         File backupDir = new File(backupPath);
-        File[] backupFiles = backupDir.listFiles();
+        // 只获取文件夹
+        File[] backupFiles = backupDir.listFiles(File::isDirectory);
         if (backupFiles != null) {
             return Arrays.stream(backupFiles).toArray();
         }
