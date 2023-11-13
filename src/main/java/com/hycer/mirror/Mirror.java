@@ -5,9 +5,9 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.minecraft.world.World;
 
 import java.io.IOException;
 
@@ -32,14 +32,19 @@ public class Mirror implements ModInitializer {
                                                 .executes(context -> executeBackup(context, true)))
                                         .executes(context -> executeBackup(context, false))
                                 )
-                                .then(CommandManager.literal("retreat").executes(context -> {
-                                    // rollback 函数执行体
-                                    context.getSource().sendMessage(Text.literal("调用 /mirror retreat" + context.getInput()));
-
-                                    return 1;
-                                }))
+                                .then(literal("backup-list").executes(this::executeBackList))
+                                .then(literal("retreat")
+                                        .then(argument("backup", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    try {
+                                                        executeRetreat(context);
+                                                        return 1;
+                                                    } catch (IOException | InterruptedException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                }))
                 )
-        );
+        ));
 
     }
     public  int executeBackup(CommandContext<ServerCommandSource> context, boolean haveTag){
@@ -54,5 +59,22 @@ public class Mirror implements ModInitializer {
             throw new RuntimeException(e);
         }
         return 1;
+    }
+
+    public int executeBackList(CommandContext<ServerCommandSource> context){
+        BackupManager backupManager = new BackupManager();
+        World world = context.getSource().getWorld();
+        Object[] backupList = backupManager.getBackupList();
+        Utils.broadcastToAllPlayers(world,  "§b[Mirror]§6地图备份:" );
+        for (Object backup: backupList){
+            Utils.broadcastToAllPlayers(world,  "§a" + backup.toString().replace(backupManager.getBackupDir(), ""));
+        }
+        return 1;
+    }
+
+    public void executeRetreat(CommandContext<ServerCommandSource> context) throws IOException, InterruptedException {
+        BackupManager backupManager = new BackupManager();
+        String backupFile = StringArgumentType.getString(context, "backup");
+        backupManager.retreat(context, backupFile);
     }
 }
