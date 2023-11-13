@@ -7,8 +7,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 
-import java.io.File;
-import java.io.IOException;;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -22,8 +21,6 @@ public class BackupManager {
     private String backupPath = "MirrorBackup\\";
     private final String worldPath = "world";
 
-    private final int maxBackups = 5;
-
     BackupManager() {
         // 检查备份路径是否存在
         File backupDir = new File(backupPath);
@@ -36,9 +33,22 @@ public class BackupManager {
             }
         }
     }
+
+    /**
+     * 获取备份路径
+     * @return 备份路径
+     */
     public String getBackupDir(){
         return backupPath;
     }
+
+    /**
+     * 备份操作
+     * @param context 命令源上下文
+     * @param haveTag 是否有备份tag
+     * @throws IOException IO异常
+     * @throws InterruptedException 中断异常
+     */
     public void backup(CommandContext<ServerCommandSource> context, boolean haveTag) throws IOException, InterruptedException {
         ServerCommandSource source =  context.getSource();
         MinecraftServer server = source.getServer();
@@ -94,9 +104,14 @@ public class BackupManager {
         executor.shutdown();
     }
 
+    /**
+     * 检查备份数量上限
+     * @param world world对象用于发送通知
+     */
     private void checkBackupCount(World world) {
         File backupDir = new File(backupPath);
-        File[] backupFiles = backupDir.listFiles();
+        File[] backupFiles = backupDir.listFiles(File::isDirectory);
+        int maxBackups = 5;
         if (backupFiles != null && backupFiles.length >= maxBackups) {
             // 根据文件的最后修改时间进行排序
             Arrays.sort(backupFiles, Comparator.comparingLong(File::lastModified));
@@ -112,6 +127,10 @@ public class BackupManager {
         }
     }
 
+    /**
+     * 删除指定备份
+     * @param backupFile 目标备份
+     */
     private void deleteBackup(File backupFile) {
         File[] files = backupFile.listFiles();
         //遍历该目录下的文件对象
@@ -130,11 +149,13 @@ public class BackupManager {
             }
         }
         //文件夹删除
-        if (!backupFile.delete()){
-            return;
-        }
+        backupFile.delete();
     }
 
+    /**
+     * 获取所有备份
+     * @return 备份数组
+     */
     public Object[] getBackupList(){
         File backupDir = new File(backupPath);
         // 只获取文件夹
@@ -145,22 +166,48 @@ public class BackupManager {
         return new Object[0];
     }
 
-    public void retreat(CommandContext<ServerCommandSource> context, String backupFile) throws IOException, InterruptedException {
+    /**
+     * 回档操作
+     * @param context 命令源上下文
+     * @param backupFile 目标备份
+     */
+    public void retreat(CommandContext<ServerCommandSource> context, String backupFile){
+        // TODO start.bat脚本检查
         File sourceBackup = new File(backupPath + backupFile);
         if (!sourceBackup.exists() || !sourceBackup.isDirectory()) {
-            Utils.broadcastToAllPlayers(context.getSource().getWorld(), "指定的备份文件不存在或不是文件夹");
+            Utils.broadcastToAllPlayers(context.getSource().getWorld(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
             System.out.println("指定的备份文件不存在或不是文件夹");
             return;
         }
-        Utils.broadcastToAllPlayers(context.getSource().getWorld(), "正在关闭服务器");
-        MinecraftServer server = context.getSource().getServer();
-        System.out.println(System.getProperty("user.dir"));
-        String javaCommand = "java Retreat " + backupFile;
-        Process process = Runtime.getRuntime().exec(javaCommand);
-        int exitCode = process.waitFor();
+        Utils.broadcastToAllPlayers(context.getSource().getWorld(), "§b[Mirror]§6服务端将在§4 10s §6后关闭并回档，请等待重启");
+        Runnable task = () ->{
+            try {
+                sleep(10000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            MinecraftServer server = context.getSource().getServer();
+            System.out.println(System.getProperty("user.dir"));
+            String retreatPath = System.getProperty("user.dir") + "\\" + backupPath + "retreat.bat";
 
+            try {
+                Runtime.getRuntime().exec(retreatPath + " " + backupFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", retreatPath + " " + backupFile);
+            // 启动命令行窗口并执行批处理脚本
+            try {
+                processBuilder.start();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            server.stop(false);
+        };
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(task);
 
-//        server.shutdown();
-
+        // 关闭线程池
+        executor.shutdown();
     }
 }
