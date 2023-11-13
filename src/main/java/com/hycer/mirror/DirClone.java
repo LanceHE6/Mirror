@@ -75,7 +75,7 @@ public class DirClone {
                     File destinationFile = new File(destinationFolder, file.getName());
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
-                    Utils.broadcastToAllPlayers(world, "§bProgress:" + copied + " / " + totalNUm + "  cloning " + file.getName());
+                    Utils.broadcastToAllPlayers(world, "§aProgress:" + copied + " / " + totalNUm);
                 }
             }
         }
