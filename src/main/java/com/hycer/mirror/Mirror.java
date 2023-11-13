@@ -9,6 +9,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
+import java.io.File;
 import java.io.IOException;
 
 import static net.minecraft.server.command.CommandManager.*;
@@ -20,6 +21,7 @@ public class Mirror implements ModInitializer {
      */
     @Override
     public void onInitialize() {
+        initialize();
         registerCommands();
     }
 
@@ -46,6 +48,32 @@ public class Mirror implements ModInitializer {
                 )
         ));
 
+    }
+    private void initialize(){
+        File backupDir = new File("MirrorBackup\\");
+        if (!backupDir.exists()) {
+            boolean created = backupDir.mkdir();
+            if (created){
+                System.out.println("backup directory created successfully");
+            } else {
+                System.out.println("backup directory creation failed");
+            }
+        }
+        // 判断是否存在 retreat.bat 文件，若不存在则创建
+        File retreatBatFile = new File("MirrorBackup\\retreat.bat");
+        if (!retreatBatFile.exists()) {
+            try {
+                boolean created = retreatBatFile.createNewFile();
+                if (created) {
+                    System.out.println("retreat.bat 回档脚本创建成功");
+                } else {
+                    System.out.println("retreat.bat 回档脚本创建失败");
+                }
+                Script.writeRetreatBatFile(retreatBatFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     public  int executeBackup(CommandContext<ServerCommandSource> context, boolean haveTag){
         ServerCommandSource player =  context.getSource();
