@@ -7,7 +7,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
-import net.minecraft.world.World;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,11 +90,11 @@ public class Mirror implements ModInitializer {
 
     public int executeBackList(CommandContext<ServerCommandSource> context){
         BackupManager backupManager = new BackupManager();
-        World world = context.getSource().getWorld();
+        ServerCommandSource player = context.getSource();
         Object[] backupList = backupManager.getBackupList();
-        Utils.broadcastToAllPlayers(world,  "§b[Mirror]§6地图备份:" );
+        player.sendMessage(Text.of("§b[Mirror]§6地图备份:"));
         for (Object backup: backupList){
-            Utils.broadcastToAllPlayers(world,  "§a" + backup.toString().replace(backupManager.getBackupDir(), ""));
+            player.sendMessage(Text.of("§a" + backup.toString().replace(backupManager.getBackupDir(), "")));
         }
         return 1;
     }
