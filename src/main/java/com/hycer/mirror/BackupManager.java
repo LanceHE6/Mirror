@@ -172,7 +172,6 @@ public class BackupManager {
      * @param backupFile 目标备份
      */
     public void retreat(CommandContext<ServerCommandSource> context, String backupFile){
-        // TODO start.bat脚本检查
         File sourceBackup = new File(backupPath + backupFile);
         if (!sourceBackup.exists() || !sourceBackup.isDirectory()) {
             Utils.broadcastToAllPlayers(context.getSource().getWorld(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
