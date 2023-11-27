@@ -4,8 +4,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -52,18 +50,18 @@ public class BackupManager {
     public void backup(CommandContext<ServerCommandSource> context, boolean haveTag) throws IOException, InterruptedException {
         ServerCommandSource source =  context.getSource();
         MinecraftServer server = source.getServer();
-        ServerWorld world = server.getWorld(source.getWorld().getRegistryKey());
+//        ServerWorld world = server.getWorld(source.getWorld().getRegistryKey());
 
-        Utils.broadcastToAllPlayers(world, "§b[Mirror]§6服务器将在 §c5s §6后进行地图备份！");
+        Utils.broadcastToAllPlayers(server, "§b[Mirror]§6服务器将在 §c5s §6后进行地图备份！");
         Runnable task = () -> {
             try {
                 sleep(5000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            checkBackupCount(world); // 检查备份数量
+            checkBackupCount(server); // 检查备份数量
             source.getServer().saveAll(false, false, false);
-            Utils.broadcastToAllPlayers(world, "§b[Mirror]§6游戏数据已保存，开始地图备份");
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6游戏数据已保存，开始地图备份");
             System.out.println("进行服务器备份");
             try {
                 sleep(1000);
@@ -87,13 +85,13 @@ public class BackupManager {
             }
 
 
-            DirClone dirClone = new DirClone(worldPath, backupPath, world);
+            DirClone dirClone = new DirClone(worldPath, backupPath, server);
             try {
                 dirClone.backup();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Utils.broadcastToAllPlayers(world, "§b[Mirror]§6地图备份完成：" + backupPath);
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
             System.out.println("备份完成");
         };
 
@@ -106,9 +104,9 @@ public class BackupManager {
 
     /**
      * 检查备份数量上限
-     * @param world world对象用于发送通知
+     * @param server MinecraftServer对象用于发送通知
      */
-    private void checkBackupCount(World world) {
+    private void checkBackupCount(MinecraftServer server) {
         File backupDir = new File(backupPath);
         File[] backupFiles = backupDir.listFiles(File::isDirectory);
         int maxBackups = 5;
@@ -121,7 +119,7 @@ public class BackupManager {
             for (int i = 0; i < numToDelete; i++) {
                 File fileToDelete = backupFiles[i];
                 deleteBackup(fileToDelete);
-                Utils.broadcastToAllPlayers(world, "§b[Mirror]§4已删除溢出备份: §6" + fileToDelete.getName());
+                Utils.broadcastToAllPlayers(server, "§b[Mirror]§4已删除溢出备份: §6" + fileToDelete.getName());
                 System.out.println("已删除溢出备份" + fileToDelete.getName());
             }
         }
@@ -149,7 +147,9 @@ public class BackupManager {
             }
         }
         //文件夹删除
-        backupFile.delete();
+        if (!backupFile.delete()){
+            System.out.println("删除文件夹失败");
+        }
     }
 
     /**
@@ -174,11 +174,11 @@ public class BackupManager {
     public void retreat(CommandContext<ServerCommandSource> context, String backupFile){
         File sourceBackup = new File(backupPath + backupFile);
         if (!sourceBackup.exists() || !sourceBackup.isDirectory()) {
-            Utils.broadcastToAllPlayers(context.getSource().getWorld(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
+            Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
             System.out.println("指定的备份文件不存在或不是文件夹");
             return;
         }
-        Utils.broadcastToAllPlayers(context.getSource().getWorld(), "§b[Mirror]§6服务端将在§4 10s §6后关闭并回档，请等待重启");
+        Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§6服务端将在§4 10s §6后关闭并回档，请等待重启");
         Runnable task = () ->{
             try {
                 sleep(10000);

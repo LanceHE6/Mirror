@@ -1,6 +1,6 @@
 package com.hycer.mirror;
 
-import net.minecraft.world.World;
+import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +16,9 @@ public class DirClone {
     private static long totalNUm = 0;
     private static long copied = 0;
 
-    private final World world;
-    DirClone(String sourcePath, String destinationPath, World world){
-        this.world = world;
+    private final MinecraftServer server;
+    DirClone(String sourcePath, String destinationPath, MinecraftServer server){
+        this.server = server;
         this.sourceFolder = new File(sourcePath);
         this.destinationFolder = new File(destinationPath);
 
@@ -60,7 +60,9 @@ public class DirClone {
      */
     public void copyFolder(File sourceFolder, File destinationFolder) throws IOException{
         if (!destinationFolder.exists()){
-            destinationFolder.mkdir();
+            if (!destinationFolder.mkdir()){
+                System.out.println("文件夹创建失败");
+            }
         }
         File[] files = sourceFolder.listFiles();
         if(files != null){
@@ -75,7 +77,7 @@ public class DirClone {
                     File destinationFile = new File(destinationFolder, file.getName());
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
-                    Utils.broadcastToAllPlayers(world, "§aProgress:" + copied + " / " + totalNUm);
+                    Utils.broadcastToAllPlayers(server, "§aProgress:" + copied + " / " + totalNUm);
                 }
             }
         }
