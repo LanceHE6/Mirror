@@ -43,9 +43,23 @@ public class Mirror implements ModInitializer {
                                                     } catch (IOException | InterruptedException e) {
                                                         throw new RuntimeException(e);
                                                     }
+                                                })))
+                                .then(literal("auto-backup")
+                                        .then(literal("true")
+                                                .executes(context -> {
+                                                    executeSetAutoBackup();
+                                                    return 1;
                                                 }))
-                )
-        ));
+                                        .then(literal("false")
+                                                .executes(context -> {
+                                                    executeSetAutoBackup();
+                                                    return 1;
+                                                }))
+                                        .executes(context -> {
+                                    executeAutoBackup();
+                                    return 1;
+                                })
+        )));
 
     }
     private void initialize(){
@@ -103,5 +117,13 @@ public class Mirror implements ModInitializer {
         BackupManager backupManager = new BackupManager();
         String backupFile = StringArgumentType.getString(context, "backup");
         backupManager.retreat(context, backupFile);
+    }
+
+    public void executeAutoBackup(){
+
+    }
+
+    public void executeSetAutoBackup(){
+
     }
 }
