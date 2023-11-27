@@ -30,9 +30,8 @@ public class Script {
         writer.println("call \"%parentDirectory%\\start.bat\"");
         writer.println("REM 获取脚本的退出代码");
         writer.println("set \"exitCode=%errorlevel%\"");
-        writer.println("REM 判断脚本是否成功启动");
         writer.println("if %exitCode% equ 0 (");
-        writer.println("    echo 服务器启动成功");
+        writer.println("    echo 服务端已关闭");
         writer.println(")");
         writer.println("endlocal");
         // 关闭 PrintWriter 对象
