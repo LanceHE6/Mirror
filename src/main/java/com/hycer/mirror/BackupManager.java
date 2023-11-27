@@ -16,8 +16,8 @@ import java.util.Arrays;
 import static java.lang.Thread.sleep;
 
 public class BackupManager {
-    private String backupPath = "MirrorBackup\\";
-    private final String worldPath = "world";
+    private String backupPath = Constants.BACKUP_PATH;
+    private final String worldPath = Constants.WORLD_PATH;
 
     BackupManager() {
         // 检查备份路径是否存在
@@ -51,8 +51,8 @@ public class BackupManager {
         ServerCommandSource source =  context.getSource();
         MinecraftServer server = source.getServer();
 //        ServerWorld world = server.getWorld(source.getWorld().getRegistryKey());
-
-        Utils.broadcastToAllPlayers(server, "§b[Mirror]§6服务器将在 §c5s §6后进行地图备份！");
+        String playerName = source.getName();
+        Utils.broadcastToAllPlayers(server, "§b[Mirror]§c %s §6发起备份请求 服务器将在 §c5s §6后进行地图备份！".formatted(playerName));
         Runnable task = () -> {
             try {
                 sleep(5000);
@@ -62,7 +62,7 @@ public class BackupManager {
             checkBackupCount(server); // 检查备份数量
             source.getServer().saveAll(false, false, false);
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6游戏数据已保存，开始地图备份");
-            System.out.println("进行服务器备份");
+//            System.out.println("进行服务器备份");
             try {
                 sleep(1000);
             } catch (InterruptedException e) {
@@ -92,7 +92,7 @@ public class BackupManager {
                 throw new RuntimeException(e);
             }
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
-            System.out.println("备份完成");
+//            System.out.println("备份完成");
         };
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -120,7 +120,7 @@ public class BackupManager {
                 File fileToDelete = backupFiles[i];
                 deleteBackup(fileToDelete);
                 Utils.broadcastToAllPlayers(server, "§b[Mirror]§4已删除溢出备份: §6" + fileToDelete.getName());
-                System.out.println("已删除溢出备份" + fileToDelete.getName());
+//                System.out.println("已删除溢出备份" + fileToDelete.getName());
             }
         }
     }
@@ -175,7 +175,7 @@ public class BackupManager {
         File sourceBackup = new File(backupPath + backupFile);
         if (!sourceBackup.exists() || !sourceBackup.isDirectory()) {
             Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
-            System.out.println("指定的备份文件不存在或不是文件夹");
+            System.out.println("指定的备份文件不存在");
             return;
         }
         Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§6服务端将在§4 10s §6后关闭并回档，请等待重启");
