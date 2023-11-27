@@ -66,6 +66,7 @@ public class DirClone {
         }
         File[] files = sourceFolder.listFiles();
         if(files != null){
+            int progress = 0;
             for (File file : files){
                 if (file.isDirectory()){
                     copyFolder(file, new File(destinationFolder, file.getName()));
@@ -77,8 +78,9 @@ public class DirClone {
                     File destinationFile = new File(destinationFolder, file.getName());
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
-                    int progress = (int) ((copied * 100) / totalNUm);
-                    if (progress % 25 == 0) {
+                    int currentProgress = (int) ((copied * 100) / totalNUm);
+                    if (progress % 25 == 0 && currentProgress != progress) {
+                        progress = currentProgress;
                         Utils.broadcastToAllPlayers(server, "§aProgress:" + progress + "%");
                     }
                 }
