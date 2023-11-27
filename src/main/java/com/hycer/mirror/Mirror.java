@@ -56,14 +56,15 @@ public class Mirror implements ModInitializer {
                                                     return 1;
                                                 }))
                                         .executes(context -> {
-                                    executeAutoBackup();
+                                    executeAutoBackup(context);
                                     return 1;
                                 })
         )));
 
     }
     private void initialize(){
-        File backupDir = new File("MirrorBackup\\");
+        // 备份文件夹检验
+        File backupDir = new File(Constants.BACKUP_PATH);
         if (!backupDir.exists()) {
             boolean created = backupDir.mkdir();
             if (created){
@@ -72,8 +73,18 @@ public class Mirror implements ModInitializer {
                 System.out.println("backup directory creation failed");
             }
         }
+        // 配置文件夹校验
+        File configDir = new File(Constants.CONFIG_PATH);
+        if (!configDir.exists()) {
+            boolean created = configDir.mkdir();
+            if (created){
+                System.out.println("config directory created successfully");
+            } else {
+                System.out.println("config directory creation failed");
+            }
+        }
         // 判断是否存在 retreat.bat 文件，若不存在则创建
-        File retreatBatFile = new File("MirrorBackup\\retreat.bat");
+        File retreatBatFile = new File(Constants.BACKUP_PATH + Constants.RETREAT_BAT_FILE);
         if (!retreatBatFile.exists()) {
             try {
                 boolean created = retreatBatFile.createNewFile();
@@ -119,8 +130,9 @@ public class Mirror implements ModInitializer {
         backupManager.retreat(context, backupFile);
     }
 
-    public void executeAutoBackup(){
-
+    public void executeAutoBackup(CommandContext<ServerCommandSource> context){
+        ModConfiguration modConfig = new ModConfiguration();
+        context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false")));
     }
 
     public void executeSetAutoBackup(){
