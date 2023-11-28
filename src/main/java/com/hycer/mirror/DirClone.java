@@ -16,6 +16,8 @@ public class DirClone {
     private static long totalNUm = 0;
     private static long copied = 0;
 
+    private int progress = 0;
+
     private final MinecraftServer server;
     DirClone(String sourcePath, String destinationPath, MinecraftServer server){
         this.server = server;
@@ -66,7 +68,7 @@ public class DirClone {
         }
         File[] files = sourceFolder.listFiles();
         if(files != null){
-            int progress = 0;
+
             for (File file : files){
                 if (file.isDirectory()){
                     copyFolder(file, new File(destinationFolder, file.getName()));
@@ -79,9 +81,9 @@ public class DirClone {
                     Files.copy(file.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     copied ++;
                     int currentProgress = (int) ((copied * 100) / totalNUm);
-                    if (progress % 25 == 0 && currentProgress != progress) {
+                    if (currentProgress % 25 == 0 && currentProgress != progress) {
                         progress = currentProgress;
-                        Utils.broadcastToAllPlayers(server, "§aProgress:" + progress + "%");
+                        Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份中...§a " + progress + "%");
                     }
                 }
             }
