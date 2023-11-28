@@ -20,7 +20,7 @@ public class ModConfiguration {
     private static final String CONFIG_FILE_PATH = CONFIG_DIR + Constants.CONFIG_FILE;
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    ModConfiguration(){
+    ModConfiguration() {
         checkAndLoadConfig();
     }
 
@@ -37,7 +37,7 @@ public class ModConfiguration {
         JsonObject configObject = new JsonObject();
         configObject.addProperty("maxBackupFiles", 5);
         configObject.addProperty("autoBackup", false);
-        configObject.addProperty("autoBackupTime", "1:00");
+        configObject.addProperty("autoBackupTime", 1);
 
         try (FileWriter writer = new FileWriter(configFile)) {
             gson.toJson(configObject, writer);
@@ -67,19 +67,40 @@ public class ModConfiguration {
         return autoBackup;
     }
 
-    public String getAutoBackupTime() {
-        return autoBackupTime;
+    public int getAutoBackupTime() {
+        return Integer.parseInt(autoBackupTime);
     }
 
     public void setMaxBackupFiles(int maxBackupFiles) {
         this.maxBackupFiles = maxBackupFiles;
+        saveConfig();
     }
 
     public void setAutoBackup(boolean autoBackup) {
         this.autoBackup = autoBackup;
+        saveConfig();
     }
 
     public void setAutoBackupTime(String autoBackupTime) {
         this.autoBackupTime = autoBackupTime;
+        saveConfig();
+    }
+
+    /**
+     * 保存配置进json文件中
+     */
+    private void saveConfig() {
+        JsonObject configObject = new JsonObject();
+        configObject.addProperty("maxBackupFiles", maxBackupFiles);
+        configObject.addProperty("autoBackup", autoBackup);
+        configObject.addProperty("autoBackupTime", autoBackupTime);
+
+        File configFile = new File(CONFIG_FILE_PATH);
+        try (FileWriter writer = new FileWriter(configFile)) {
+            gson.toJson(configObject, writer);
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
