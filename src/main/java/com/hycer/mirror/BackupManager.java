@@ -6,9 +6,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.Arrays;
@@ -30,14 +36,6 @@ public class BackupManager {
                 System.out.println("backup directory creation failed");
             }
         }
-    }
-
-    /**
-     * 获取备份路径
-     * @return 备份路径
-     */
-    public String getBackupDir(){
-        return backupPath;
     }
 
     /**
@@ -83,8 +81,6 @@ public class BackupManager {
             } else {
                 backupPath += nowTime;
             }
-
-
             DirClone dirClone = new DirClone(worldPath, backupPath, server);
             try {
                 dirClone.backup();
@@ -93,6 +89,45 @@ public class BackupManager {
             }
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
 //            System.out.println("备份完成");
+        };
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(task);
+
+        // 关闭线程池
+        executor.shutdown();
+    }
+    public void autoBackup(MinecraftServer server) {
+        Utils.broadcastToAllPlayers(server, "§b[Mirror]§6开始执行§c 自动备份 §6 服务器将在 §c5s §6后进行地图备份！");
+        Runnable task = () -> {
+            try {
+                sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            checkBackupCount(server); // 检查备份数量
+            server.saveAll(false, false, false);
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6游戏数据已保存，开始地图备份");
+
+            try {
+                sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            // 获取当前日期时间
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
+            LocalDateTime localDateTime = LocalDateTime.now();
+            String nowTime = localDateTime.format(formatter);
+
+            backupPath += nowTime;
+
+            DirClone dirClone = new DirClone(worldPath, backupPath, server);
+            try {
+                dirClone.backup();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
         };
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -156,14 +191,27 @@ public class BackupManager {
      * 获取所有备份
      * @return 备份数组
      */
-    public Object[] getBackupList(){
+    public Map<String, String> getBackupList() {
         File backupDir = new File(backupPath);
-        // 只获取文件夹
         File[] backupFiles = backupDir.listFiles(File::isDirectory);
+        Map<String, String> backupMap = new HashMap<>();
+
         if (backupFiles != null) {
-            return Arrays.stream(backupFiles).toArray();
+            for (File file : backupFiles) {
+                String backupName = file.getName();
+                try {
+                    BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                    FileTime creationTime = fileAttributes.creationTime();
+                    LocalDateTime localDateTime = LocalDateTime.ofInstant(creationTime.toInstant(), ZoneId.systemDefault());
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String formattedCreationTime = formatter.format(localDateTime);
+                    backupMap.put(backupName, formattedCreationTime);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        return new Object[0];
+        return backupMap;
     }
 
     /**
