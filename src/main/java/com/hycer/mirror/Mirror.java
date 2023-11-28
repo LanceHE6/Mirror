@@ -5,11 +5,14 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalTime;
+import java.util.Map;
 
 import static net.minecraft.server.command.CommandManager.*;
 
@@ -27,7 +30,7 @@ public class Mirror implements ModInitializer {
     public void registerCommands(){
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 dispatcher.register(literal("mirror")
-                                .requires(sources -> sources.hasPermissionLevel(4))
+                                .requires(sources -> sources.hasPermissionLevel(2))
                                 .then(literal("backup")
                                         .then(argument("tag", StringArgumentType.string())
                                                 .executes(context -> executeBackup(context, true)))
@@ -47,12 +50,12 @@ public class Mirror implements ModInitializer {
                                 .then(literal("auto-backup")
                                         .then(literal("true")
                                                 .executes(context -> {
-                                                    executeSetAutoBackup();
+                                                    executeSetAutoBackup(context, true);
                                                     return 1;
                                                 }))
                                         .then(literal("false")
                                                 .executes(context -> {
-                                                    executeSetAutoBackup();
+                                                    executeSetAutoBackup(context, false);
                                                     return 1;
                                                 }))
                                         .executes(context -> {
@@ -98,6 +101,16 @@ public class Mirror implements ModInitializer {
                 e.printStackTrace();
             }
         }
+        // 注册时间监听器用于自动备份
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            LocalTime currentTime = LocalTime.now();
+            ModConfiguration modConfig = new ModConfiguration();
+
+            if (modConfig.isAutoBackup() && currentTime.getHour() == modConfig.getAutoBackupTime() && currentTime.getMinute() == 0 && currentTime.getSecond() == 0) {
+                BackupManager backupManager = new BackupManager();
+                backupManager.autoBackup(server);
+            }
+        });
     }
     public  int executeBackup(CommandContext<ServerCommandSource> context, boolean haveTag){
         ServerCommandSource player =  context.getSource();
@@ -116,10 +129,12 @@ public class Mirror implements ModInitializer {
     public int executeBackList(CommandContext<ServerCommandSource> context){
         BackupManager backupManager = new BackupManager();
         ServerCommandSource player = context.getSource();
-        Object[] backupList = backupManager.getBackupList();
-        player.sendMessage(Text.of("§b[Mirror]§6地图备份:"));
-        for (Object backup: backupList){
-            player.sendMessage(Text.of("§a" + backup.toString().replace(backupManager.getBackupDir(), "")));
+        Map<String, String> backupList = backupManager.getBackupList();
+        player.sendMessage(Text.of("§b[Mirror]§6地图备份"));
+        for (Map.Entry<String, String> entry : backupList.entrySet()) {
+            String backupName = entry.getKey();
+            String creationTime = entry.getValue();
+            player.sendMessage(Text.of("§e备份名: §a" + backupName + "  §e备份时间: §a" + creationTime));
         }
         return 1;
     }
@@ -135,7 +150,13 @@ public class Mirror implements ModInitializer {
         context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false")));
     }
 
-    public void executeSetAutoBackup(){
-
+    public void executeSetAutoBackup(CommandContext<ServerCommandSource> context, boolean status){
+        ModConfiguration modConfig = new ModConfiguration();
+        if (status == modConfig.isAutoBackup()){
+            context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态已经为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false")));
+        } else {
+            modConfig.setAutoBackup(status);
+            context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态已设置为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false")));
+        }
     }
 }
