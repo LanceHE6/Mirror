@@ -12,12 +12,9 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Arrays;
 
 import static java.lang.Thread.sleep;
 
@@ -144,7 +141,7 @@ public class BackupManager {
     private void checkBackupCount(MinecraftServer server) {
         File backupDir = new File(backupPath);
         File[] backupFiles = backupDir.listFiles(File::isDirectory);
-        int maxBackups = 5;
+        int maxBackups = new ModConfiguration().getMaxBackupFiles();
         if (backupFiles != null && backupFiles.length >= maxBackups) {
             // 根据文件的最后修改时间进行排序
             Arrays.sort(backupFiles, Comparator.comparingLong(File::lastModified));
@@ -154,7 +151,7 @@ public class BackupManager {
             for (int i = 0; i < numToDelete; i++) {
                 File fileToDelete = backupFiles[i];
                 deleteBackup(fileToDelete);
-                Utils.broadcastToAllPlayers(server, "§b[Mirror]§4已删除溢出备份: §6" + fileToDelete.getName());
+                Utils.broadcastToAllPlayers(server, "§b[Mirror]§6已达到最大备份数量: %d §4删除溢出备份: §6".formatted(maxBackups) + fileToDelete.getName());
 //                System.out.println("已删除溢出备份" + fileToDelete.getName());
             }
         }
@@ -195,8 +192,21 @@ public class BackupManager {
         File backupDir = new File(backupPath);
         File[] backupFiles = backupDir.listFiles(File::isDirectory);
         Map<String, String> backupMap = new HashMap<>();
-
+        // 根据备份时间排序
         if (backupFiles != null) {
+            List<File> sortedFiles = Arrays.asList(backupFiles);
+            sortedFiles.sort((file1, file2) -> {
+                try {
+                    BasicFileAttributes attributes1 = Files.readAttributes(file1.toPath(), BasicFileAttributes.class);
+                    BasicFileAttributes attributes2 = Files.readAttributes(file2.toPath(), BasicFileAttributes.class);
+                    FileTime creationTime1 = attributes1.creationTime();
+                    FileTime creationTime2 = attributes2.creationTime();
+                    return creationTime1.compareTo(creationTime2);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return 0;
+            });
             for (File file : backupFiles) {
                 String backupName = file.getName();
                 try {
@@ -209,7 +219,9 @@ public class BackupManager {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
+                }
+
+            return backupMap;
         }
         return backupMap;
     }
