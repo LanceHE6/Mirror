@@ -101,14 +101,20 @@ public class Mirror implements ModInitializer {
                 e.printStackTrace();
             }
         }
+        final boolean[] executed = {false};
         // 注册时间监听器用于自动备份
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             LocalTime currentTime = LocalTime.now();
             ModConfiguration modConfig = new ModConfiguration();
 
             if (modConfig.isAutoBackup() && currentTime.getHour() == modConfig.getAutoBackupTime() && currentTime.getMinute() == 0 && currentTime.getSecond() == 0) {
-                BackupManager backupManager = new BackupManager();
-                backupManager.autoBackup(server);
+                if (!executed[0]) {
+                    BackupManager backupManager = new BackupManager();
+                    backupManager.autoBackup(server);
+                    executed[0] = true;
+                }
+            } else {
+                executed[0] = false;
             }
         });
     }
@@ -147,7 +153,7 @@ public class Mirror implements ModInitializer {
 
     public void executeAutoBackup(CommandContext<ServerCommandSource> context){
         ModConfiguration modConfig = new ModConfiguration();
-        context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false")));
+        context.getSource().sendMessage(Text.of("§b[Mirror]§6当前自动备份状态为:" +  (modConfig.isAutoBackup() ? "§a": "§c") + (modConfig.isAutoBackup() ? " true": " false") + (modConfig.isAutoBackup() ? "§6自动备份时间: 每天 §c" + modConfig.getAutoBackupTime() + "§6点" : "")));
     }
 
     public void executeSetAutoBackup(CommandContext<ServerCommandSource> context, boolean status){
