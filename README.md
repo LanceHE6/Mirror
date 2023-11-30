@@ -21,7 +21,7 @@ Mirror是一款用于fabric服务端管理存档备份的mod
 
 ## 使用说明
 
-使用存档备份指令需要获取op权限，并且权限等级为4
+使用存档备份指令需要获取op权限，并且权限等级至少为2
 
 Mod在初始化时会检查备份文件夹--服务端根目录下的```MirrorBackup```文件夹以及其中的回档脚本是否存在，
 若不存在则会自动创建
@@ -40,7 +40,7 @@ Mod在初始化时会检查备份文件夹--服务端根目录下的```MirrorBac
 备份最大数量有限制，默认为5，超过5份时会自动将最早的备份删除
 
 ```
-/mirror backup-list
+/mirror backupList
 ```
 
 能够读取备份目录下的备份并将名称列表显示给玩家
@@ -56,3 +56,39 @@ Mod在初始化时会检查备份文件夹--服务端根目录下的```MirrorBac
 backup参数为备份文件名称，如```2023-11-15-23-00```
 
 _请注意：回档脚本的操作依赖于服务端的启动脚本，请确保服务端的启动脚本存在并命名为 ```start.bat``` 否则服务端将无法完成重启_
+
+```
+/mirror autoBackup
+```
+查询当前自动备份功能的开关状态
+_自动备份功能会在每天设定的时间的点自动备份一次_
+
+```
+/mirror autoBackup <true/false>
+```
+打开或关闭自动备份功能
+
+```
+/mirror autoBackTime
+```
+查询当前自动备份时间
+
+```
+/mirror autoBackTime <time>
+```
+设置自动备份时间 0~23
+
+```
+/mirror maxBackupFiles
+```
+查询当前最大保留备份数
+
+```
+/mirror maxBackupFiles <value>
+```
+设置当前最大保留备份数 1~20
+
+```
+/mirror deleteBackup <backupName>
+```
+删除指定的备份
