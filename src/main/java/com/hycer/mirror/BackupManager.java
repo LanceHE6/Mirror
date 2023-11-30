@@ -85,6 +85,7 @@ public class BackupManager {
                 throw new RuntimeException(e);
             }
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
+            Mirror.setBackupExecuting(false);
 //            System.out.println("备份完成");
         };
 
@@ -125,6 +126,7 @@ public class BackupManager {
                 throw new RuntimeException(e);
             }
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
+            Mirror.setBackupExecuting(false);
         };
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -161,7 +163,7 @@ public class BackupManager {
      * 删除指定备份
      * @param backupFile 目标备份
      */
-    private void deleteBackup(File backupFile) {
+    public void deleteBackup(File backupFile) {
         File[] files = backupFile.listFiles();
         //遍历该目录下的文件对象
         if (files != null) {
@@ -191,17 +193,18 @@ public class BackupManager {
     public Map<String, String> getBackupList() {
         File backupDir = new File(backupPath);
         File[] backupFiles = backupDir.listFiles(File::isDirectory);
-        Map<String, String> backupMap = new HashMap<>();
+        // LinkedHashMap会保留数据的插入顺序
+        Map<String, String> backupMap = new LinkedHashMap<>();
         // 根据备份时间排序
         if (backupFiles != null) {
-            List<File> sortedFiles = Arrays.asList(backupFiles);
-            sortedFiles.sort((file1, file2) -> {
+            // 使用自定义的比较器进行排序
+            Arrays.sort(backupFiles, (file1, file2) -> {
                 try {
-                    BasicFileAttributes attributes1 = Files.readAttributes(file1.toPath(), BasicFileAttributes.class);
-                    BasicFileAttributes attributes2 = Files.readAttributes(file2.toPath(), BasicFileAttributes.class);
-                    FileTime creationTime1 = attributes1.creationTime();
-                    FileTime creationTime2 = attributes2.creationTime();
-                    return creationTime1.compareTo(creationTime2);
+                    BasicFileAttributes fileAttributes1 = Files.readAttributes(file1.toPath(), BasicFileAttributes.class);
+                    BasicFileAttributes fileAttributes2 = Files.readAttributes(file2.toPath(), BasicFileAttributes.class);
+                    FileTime creationTime1 = fileAttributes1.creationTime();
+                    FileTime creationTime2 = fileAttributes2.creationTime();
+                    return creationTime2.compareTo(creationTime1);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
