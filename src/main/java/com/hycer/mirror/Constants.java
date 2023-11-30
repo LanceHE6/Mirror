@@ -6,4 +6,5 @@ public interface Constants {
     String CONFIG_PATH = "config/";
     String CONFIG_FILE = "Mirror.json";
     String RETREAT_BAT_FILE = "retreat.bat";
+    String START_BAT_FILE = "start.bat";
 }

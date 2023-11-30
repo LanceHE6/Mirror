@@ -196,6 +196,11 @@ public class Mirror implements ModInitializer {
     }
 
     public void executeRetreat(CommandContext<ServerCommandSource> context) throws IOException, InterruptedException {
+        File startBatFile = new File(Constants.START_BAT_FILE);
+        if (!startBatFile.exists()){
+            context.getSource().sendMessage(Text.of("§b[Mirror]§4未检测到服务端启动脚本§4§o start.bat §4无法使用回档功能！"));
+            return;
+        }
         BackupManager backupManager = new BackupManager();
         String backupFile = StringArgumentType.getString(context, "backup");
         backupManager.retreat(context, backupFile);
