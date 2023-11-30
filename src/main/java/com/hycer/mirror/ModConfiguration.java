@@ -14,7 +14,7 @@ public class ModConfiguration {
 
     private int maxBackupFiles;
     private boolean autoBackup;
-    private String autoBackupTime;
+    private int autoBackupTime;
 
     private static final String CONFIG_DIR = Constants.CONFIG_PATH;
     private static final String CONFIG_FILE_PATH = CONFIG_DIR + Constants.CONFIG_FILE;
@@ -53,7 +53,7 @@ public class ModConfiguration {
 
             maxBackupFiles = configObject.get("maxBackupFiles").getAsInt();
             autoBackup = configObject.get("autoBackup").getAsBoolean();
-            autoBackupTime = configObject.get("autoBackupTime").getAsString();
+            autoBackupTime = configObject.get("autoBackupTime").getAsInt();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,7 +68,7 @@ public class ModConfiguration {
     }
 
     public int getAutoBackupTime() {
-        return Integer.parseInt(autoBackupTime);
+        return autoBackupTime;
     }
 
     public void setMaxBackupFiles(int maxBackupFiles) {
@@ -81,7 +81,7 @@ public class ModConfiguration {
         saveConfig();
     }
 
-    public void setAutoBackupTime(String autoBackupTime) {
+    public void setAutoBackupTime(int autoBackupTime) {
         this.autoBackupTime = autoBackupTime;
         saveConfig();
     }
@@ -99,6 +99,7 @@ public class ModConfiguration {
         try (FileWriter writer = new FileWriter(configFile)) {
             gson.toJson(configObject, writer);
             writer.flush();
+            System.out.println("[Mirror]配置已更新");
         } catch (IOException e) {
             e.printStackTrace();
         }
