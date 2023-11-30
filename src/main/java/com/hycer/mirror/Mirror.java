@@ -202,7 +202,7 @@ public class Mirror implements ModInitializer {
             return;
         }
         BackupManager backupManager = new BackupManager();
-        String backupFile = StringArgumentType.getString(context, "backup");
+        String backupFile = StringArgumentType.getString(context, "backupName");
         backupManager.retreat(context, backupFile);
     }
 
