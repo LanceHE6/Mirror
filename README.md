@@ -3,6 +3,12 @@
 
 <div align="center">
 
+![](./src/main/resources/assets/mirror/icon.png)
+
+</div>
+
+<div align="center">
+
 ![Static Badge](https://img.shields.io/badge/Licence-MIT-blue)
 ![Static Badge](https://img.shields.io/badge/Java-Mod-orange)
 ![Static Badge](https://img.shields.io/badge/IDEA-MCDevelopment-green)
