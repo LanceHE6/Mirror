@@ -54,6 +54,7 @@ public class BackupManager {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+            double startTime =  System.currentTimeMillis();
             checkBackupCount(server); // 检查备份数量
             source.getServer().saveAll(false, false, false);
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6游戏数据已保存，开始地图备份");
@@ -84,7 +85,8 @@ public class BackupManager {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
+            double duration = (System.currentTimeMillis() - startTime) / 1000;
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6备份完成：" + backupPath + "  耗时 " + String.format("%.2f", duration) + " s");
             Mirror.setBackupExecuting(false);
 //            System.out.println("备份完成");
         };
@@ -103,6 +105,7 @@ public class BackupManager {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+            double startTime = System.currentTimeMillis();
             checkBackupCount(server); // 检查备份数量
             server.saveAll(false, false, false);
             Utils.broadcastToAllPlayers(server, "§b[Mirror]§6游戏数据已保存，开始地图备份");
@@ -125,7 +128,8 @@ public class BackupManager {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6地图备份完成：" + backupPath);
+            double duration = (System.currentTimeMillis() - startTime) / 1000;
+            Utils.broadcastToAllPlayers(server, "§b[Mirror]§6备份完成：" + backupPath +  "  耗时 " + String.format("%.2f", duration) + " s");
             Mirror.setBackupExecuting(false);
         };
 
