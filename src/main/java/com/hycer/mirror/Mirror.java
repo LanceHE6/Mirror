@@ -42,11 +42,11 @@ public class Mirror implements ModInitializer {
                                 .executes(context -> executeBackup(context, false))
                         )
                         .then(literal("backupList").executes(this::executeBackList))
-                        .then(literal("retreat")
+                        .then(literal("rollback")
                                 .then(argument("backupName", StringArgumentType.string())
                                         .executes(context -> {
                                             try {
-                                                executeRetreat(context);
+                                                executeRollback(context);
                                                 return 1;
                                             } catch (IOException | InterruptedException e) {
                                                 throw new RuntimeException(e);
@@ -117,17 +117,17 @@ public class Mirror implements ModInitializer {
                 System.out.println("config directory creation failed");
             }
         }
-        // 判断是否存在 retreat.bat 文件，若不存在则创建
-        File retreatBatFile = new File(Constants.BACKUP_PATH + Constants.RETREAT_SCRIPT_FILE);
-        if (!retreatBatFile.exists()) {
+        // 判断是否存在 rollback.bat 文件，若不存在则创建
+        File rollbackBatFile = new File(Constants.BACKUP_PATH + Constants.ROLLBACK_SCRIPT_FILE);
+        if (!rollbackBatFile.exists()) {
             try {
-                boolean created = retreatBatFile.createNewFile();
+                boolean created = rollbackBatFile.createNewFile();
                 if (created) {
-                    System.out.println("retreat.bat 回档脚本创建成功");
+                    System.out.println("rollback.bat 回档脚本创建成功");
                 } else {
-                    System.out.println("retreat.bat 回档脚本创建失败");
+                    System.out.println("rollback.bat 回档脚本创建失败");
                 }
-                Script.writeRetreatFile(retreatBatFile);
+                Script.writeRollbackFile(rollbackBatFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -195,7 +195,7 @@ public class Mirror implements ModInitializer {
         return 1;
     }
 
-    public void executeRetreat(CommandContext<ServerCommandSource> context) throws IOException, InterruptedException {
+    public void executeRollback(CommandContext<ServerCommandSource> context) throws IOException, InterruptedException {
         File startBatFile = new File(Constants.START_SCRIPT_FILE);
         if (!startBatFile.exists()){
             context.getSource().sendMessage(Text.of("§b[Mirror]§4未检测到服务端启动脚本§4§o start.bat §4无法使用回档功能！"));
@@ -203,7 +203,7 @@ public class Mirror implements ModInitializer {
         }
         BackupManager backupManager = new BackupManager();
         String backupFile = StringArgumentType.getString(context, "backupName");
-        backupManager.retreat(context, backupFile);
+        backupManager.rollback(context, backupFile);
     }
 
     public void executeAutoBackup(CommandContext<ServerCommandSource> context){
