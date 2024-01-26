@@ -239,7 +239,7 @@ public class BackupManager {
      * @param context 命令源上下文
      * @param backupFile 目标备份
      */
-    public void retreat(CommandContext<ServerCommandSource> context, String backupFile){
+    public void rollback(CommandContext<ServerCommandSource> context, String backupFile) throws IOException {
         File sourceBackup = new File(backupPath + backupFile);
         if (!sourceBackup.exists() || !sourceBackup.isDirectory()) {
             Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§4指定的备份文件不存在或不是文件夹");
@@ -247,48 +247,40 @@ public class BackupManager {
             return;
         }
         Utils.broadcastToAllPlayers(context.getSource().getServer(), "§b[Mirror]§6服务端将在§4 10s §6后关闭并回档，请等待重启");
-        Runnable task = () ->{
-            try {
-                sleep(10000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+
+        MinecraftServer server = context.getSource().getServer();
+
+        String rollbackPath = System.getProperty("user.dir") + "/" + backupPath + Constants.ROLLBACK_SCRIPT_FILE;
+        System.out.println(System.getProperty("user.dir"));
+
+        ProcessBuilder processBuilder = null;
+
+        if(Constants.SYSTEM_TYPE == 1){
+            processBuilder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", rollbackPath + " " + backupFile);
+        } else {
+
+            System.out.println("执行回档脚本");
+            Runtime.getRuntime().exec("chmod +x " + rollbackPath);
+            processBuilder = new ProcessBuilder("/bin/sh", "-c", rollbackPath + " " + backupFile);
+        }
+        processBuilder.redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.equals("shutdown")){
+                    server.stop(false);
+                    break;
+                }
+                System.out.println(line); // 打印新进程的输出信息
             }
-            MinecraftServer server = context.getSource().getServer();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        server.stop(false);
 
-            String retreatPath = System.getProperty("user.dir") + "/" + backupPath + Constants.RETREAT_SCRIPT_FILE;
-            System.out.println(System.getProperty("user.dir"));
 
-            if(Constants.SYSTEM_TYPE == 1){
-                ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", retreatPath + " " + backupFile);
-                // 启动命令行窗口并执行批处理脚本
-                try {
-                    processBuilder.start();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                try {
-                    System.out.println("执行回档脚本");
-                    Runtime.getRuntime().exec("chmod +x " + retreatPath);
-                } catch (RuntimeException | IOException e) {
-                    throw new RuntimeException(e);
-                }
-                ProcessBuilder processBuilder = new ProcessBuilder("/bin/sh", "-c", retreatPath + " " + backupFile);
-                processBuilder.redirectErrorStream(true);
-                try {
-                    processBuilder.start();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-            }
-
-            server.stop(false);
-        };
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(task);
-
-        // 关闭线程池
-        executor.shutdown();
     }
 }
