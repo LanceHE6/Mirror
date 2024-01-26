@@ -47,6 +47,7 @@ public class BackupManager {
         MinecraftServer server = source.getServer();
 //        ServerWorld world = server.getWorld(source.getWorld().getRegistryKey());
         String playerName = source.getName();
+        System.out.println(System.getProperty("os.name"));
         Utils.broadcastToAllPlayers(server, "§b[Mirror]§c %s §6发起备份请求 服务器将在 §c5s §6后进行地图备份！".formatted(playerName));
         Runnable task = () -> {
             try {
@@ -253,21 +254,35 @@ public class BackupManager {
                 throw new RuntimeException(e);
             }
             MinecraftServer server = context.getSource().getServer();
-            System.out.println(System.getProperty("user.dir"));
-            String retreatPath = System.getProperty("user.dir") + "\\" + backupPath + "retreat.bat";
 
-            try {
-                Runtime.getRuntime().exec(retreatPath + " " + backupFile);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            String retreatPath = System.getProperty("user.dir") + "/" + backupPath + Constants.RETREAT_SCRIPT_FILE;
+            System.out.println(System.getProperty("user.dir"));
+
+            if(Constants.SYSTEM_TYPE == 1){
+                ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", retreatPath + " " + backupFile);
+                // 启动命令行窗口并执行批处理脚本
+                try {
+                    processBuilder.start();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                try {
+                    System.out.println("执行回档脚本");
+                    Runtime.getRuntime().exec("chmod +x " + retreatPath);
+                } catch (RuntimeException | IOException e) {
+                    throw new RuntimeException(e);
+                }
+                ProcessBuilder processBuilder = new ProcessBuilder("/bin/sh", "-c", retreatPath + " " + backupFile);
+                processBuilder.redirectErrorStream(true);
+                try {
+                    processBuilder.start();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
-            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", retreatPath + " " + backupFile);
-            // 启动命令行窗口并执行批处理脚本
-            try {
-                processBuilder.start();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+
             server.stop(false);
         };
         ExecutorService executor = Executors.newSingleThreadExecutor();

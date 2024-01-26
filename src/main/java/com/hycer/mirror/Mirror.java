@@ -118,7 +118,7 @@ public class Mirror implements ModInitializer {
             }
         }
         // 判断是否存在 retreat.bat 文件，若不存在则创建
-        File retreatBatFile = new File(Constants.BACKUP_PATH + Constants.RETREAT_BAT_FILE);
+        File retreatBatFile = new File(Constants.BACKUP_PATH + Constants.RETREAT_SCRIPT_FILE);
         if (!retreatBatFile.exists()) {
             try {
                 boolean created = retreatBatFile.createNewFile();
@@ -127,7 +127,7 @@ public class Mirror implements ModInitializer {
                 } else {
                     System.out.println("retreat.bat 回档脚本创建失败");
                 }
-                Script.writeRetreatBatFile(retreatBatFile);
+                Script.writeRetreatFile(retreatBatFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -196,7 +196,7 @@ public class Mirror implements ModInitializer {
     }
 
     public void executeRetreat(CommandContext<ServerCommandSource> context) throws IOException, InterruptedException {
-        File startBatFile = new File(Constants.START_BAT_FILE);
+        File startBatFile = new File(Constants.START_SCRIPT_FILE);
         if (!startBatFile.exists()){
             context.getSource().sendMessage(Text.of("§b[Mirror]§4未检测到服务端启动脚本§4§o start.bat §4无法使用回档功能！"));
             return;
