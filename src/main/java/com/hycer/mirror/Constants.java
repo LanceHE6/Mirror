@@ -11,7 +11,7 @@ public class Constants {
     static {
         SYSTEM_TYPE = setSystemType();
     }
-    public static String RETREAT_SCRIPT_FILE =  Constants.SYSTEM_TYPE == 1 ? "retreat.bat" : "retreat.sh";
+    public static String ROLLBACK_SCRIPT_FILE =  Constants.SYSTEM_TYPE == 1 ? "rollback.bat" : "rollback.sh";
     public static String START_SCRIPT_FILE = Constants.SYSTEM_TYPE == 1 ? "start.bat" : "start.sh";
 
     private static int setSystemType() {
